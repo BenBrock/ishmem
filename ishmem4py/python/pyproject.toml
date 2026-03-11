@@ -25,3 +25,10 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["ishmem4py"]
+
+[tool.setuptools.package-data]
+ishmem4py = [
+  "_ishmem4py_runtime*.so",
+  "_ishmem4py_runtime*.dylib",
+  "_ishmem4py_runtime*.pyd",
+]

@@ -1,21 +1,31 @@
 # ishmem4py Python Package
 
-This directory contains the installable Python package for the current `ishmem4py` MVP.
+This directory supports two install modes.
 
-The package is intentionally thin:
+## Standard install
 
-- it installs the pure-Python wrapper module
-- it expects the runtime shared library to already exist
-- it locates that runtime through `ISHMEM4PY_RUNTIME_LIBRARY`
-
-Typical editable install:
+Build `ishmem` with `-DBUILD_PYTHON_BINDINGS=ON`, then install the package from the build tree:
 
 ```bash
-pip install -e /docker-mount/ishmem/ishmem4py/python
+pip install /path/to/ishmem-build/ishmem4py/python
 ```
 
-At runtime, set:
+That build-tree package includes `_ishmem4py_runtime.so`, so `ishmem4py` can load its own runtime
+without `ISHMEM4PY_RUNTIME_LIBRARY`.
+
+## Editable / dev install
+
+Install the source tree in editable mode when you are actively changing the Python code:
 
 ```bash
-export ISHMEM4PY_RUNTIME_LIBRARY=/docker-mount/ishmem/build-ishmem4py-icpx-noaot/ishmem4py/python/ishmem4py/_ishmem4py_runtime.so
+pip install -e /path/to/ishmem-src/ishmem4py/python
 ```
+
+For editable installs, point the package at the runtime produced by your CMake build:
+
+```bash
+export ISHMEM4PY_RUNTIME_LIBRARY=/path/to/ishmem-build/ishmem4py/python/ishmem4py/_ishmem4py_runtime.so
+```
+
+In both modes, external runtime dependencies such as oneAPI, PTI, and the OpenSHMEM backend still
+need to be visible through your normal environment setup.

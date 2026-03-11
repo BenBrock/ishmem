@@ -93,9 +93,9 @@ def _load_runtime():
         ) from last_error
 
     raise RuntimeError(
-        "Could not locate _ishmem4py_runtime.so. Build ishmem with "
-        "-DBUILD_PYTHON_BINDINGS=ON and add the resulting build-tree python directory to "
-        "PYTHONPATH, or set ISHMEM4PY_RUNTIME_LIBRARY explicitly."
+        "Could not locate _ishmem4py_runtime.so. For a standard install, build ishmem with "
+        "-DBUILD_PYTHON_BINDINGS=ON and pip install the build-tree package directory. "
+        f"For an editable/dev install, set {_RUNTIME_ENVVAR} to the built runtime library."
     )
 
 

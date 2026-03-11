@@ -13,10 +13,27 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 set(ISHMEM4PY_BUILD_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
 set(ISHMEM4PY_PYTHON_BUILD_ROOT "${ISHMEM4PY_BUILD_ROOT}/python")
 set(ISHMEM4PY_PKG_BUILD_DIR "${ISHMEM4PY_PYTHON_BUILD_ROOT}/ishmem4py")
+set(ISHMEM4PY_SOURCE_PYTHON_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/python")
+set(ISHMEM4PY_SOURCE_PKG_DIR "${ISHMEM4PY_SOURCE_PYTHON_ROOT}/ishmem4py")
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/python/ DESTINATION ${ISHMEM4PY_PYTHON_BUILD_ROOT})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/ DESTINATION ${ISHMEM4PY_BUILD_ROOT})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/examples/ DESTINATION ${ISHMEM4PY_BUILD_ROOT})
+
+add_custom_target(ishmem4py-package-files
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ISHMEM4PY_PYTHON_BUILD_ROOT}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${ISHMEM4PY_SOURCE_PYTHON_ROOT}/pyproject.toml"
+        "${ISHMEM4PY_PYTHON_BUILD_ROOT}/pyproject.toml"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${ISHMEM4PY_SOURCE_PYTHON_ROOT}/README.md"
+        "${ISHMEM4PY_PYTHON_BUILD_ROOT}/README.md"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${ISHMEM4PY_SOURCE_PYTHON_ROOT}/setup.py"
+        "${ISHMEM4PY_PYTHON_BUILD_ROOT}/setup.py"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${ISHMEM4PY_SOURCE_PKG_DIR}"
+        "${ISHMEM4PY_PKG_BUILD_DIR}"
+    VERBATIM)
 
 add_library(ishmem4py-runtime SHARED
     csrc/ishmem4py_runtime.cpp)
@@ -37,7 +54,7 @@ set_target_properties(ishmem4py-runtime PROPERTIES
     POSITION_INDEPENDENT_CODE 1)
 
 add_custom_target(ishmem4py ALL
-    DEPENDS ishmem4py-runtime)
+    DEPENDS ishmem4py-package-files ishmem4py-runtime)
 
 message(STATUS "\n======= ishmem4py summary ========")
 message(STATUS "Python interpreter:          ${Python3_EXECUTABLE}")
