@@ -1,15 +1,13 @@
 # Copyright (C) 2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 
-import struct
+from __future__ import annotations
+
 import sys
 
 import ishmem4py as ishmem
 
-
-def _expect_equal(label: str, actual: int, expected: int) -> None:
-    if actual != expected:
-        raise AssertionError(f"{label}: expected {expected}, got {actual}")
+from utils import expect_equal, pack_int32, unpack_int32
 
 
 def main() -> int:
@@ -26,20 +24,24 @@ def main() -> int:
         src = ishmem.malloc(4)
         dst = ishmem.calloc(1, 4)
         try:
-            src.write(struct.pack("=i", my_pe))
+            src.write(pack_int32(my_pe))
 
             ishmem.barrier_all()
 
-            ishmem.putmem(dst, src.read(4), pe=next_pe)
+            ishmem.put(dst, src.read(4), pe=next_pe)
             ishmem.barrier_all()
 
-            received = struct.unpack("=i", dst.read(4))[0]
-            _expect_equal("putmem ring result", received, prev_pe)
+            received = unpack_int32(dst.read(4))
+            expect_equal("put ring result", received, prev_pe)
 
             host_value = bytearray(4)
-            ishmem.getmem(host_value, src, pe=next_pe)
-            fetched = struct.unpack("=i", host_value)[0]
-            _expect_equal("getmem ring result", fetched, next_pe)
+            ishmem.get(host_value, src, pe=next_pe)
+            expect_equal("get ring result", unpack_int32(host_value), next_pe)
+
+            remote_ptr = ishmem.ishmem_ptr(src, pe=next_pe)
+            if remote_ptr is not None:
+                expect_equal("ptr metadata size", remote_ptr.size, src.size)
+                expect_equal("ptr metadata pe", remote_ptr.pe, next_pe)
 
             ishmem.barrier_all()
         finally:

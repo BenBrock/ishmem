@@ -20,18 +20,18 @@ def main() -> None:
             src.write(struct.pack("=i", my_pe))
             ishmem.barrier_all()
 
-            ishmem.putmem(dst, src.read(4), pe=next_pe)
+            ishmem.put(dst, src.read(4), pe=next_pe)
             ishmem.barrier_all()
 
             received = struct.unpack("=i", dst.read(4))[0]
 
             fetched = bytearray(4)
-            ishmem.getmem(fetched, src, pe=next_pe)
+            ishmem.get(fetched, src, pe=next_pe)
             fetched_value = struct.unpack("=i", fetched)[0]
 
             print(
-                f"PE {my_pe}: dst after putmem={received} (expected {prev_pe}), "
-                f"getmem from PE {next_pe} returned {fetched_value}"
+                f"PE {my_pe}: dst after put={received} (expected {prev_pe}), "
+                f"get from PE {next_pe} returned {fetched_value}"
             )
             ishmem.barrier_all()
         finally:

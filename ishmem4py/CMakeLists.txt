@@ -16,9 +16,6 @@ set(ISHMEM4PY_PKG_BUILD_DIR "${ISHMEM4PY_PYTHON_BUILD_ROOT}/ishmem4py")
 set(ISHMEM4PY_SOURCE_PYTHON_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/python")
 set(ISHMEM4PY_SOURCE_PKG_DIR "${ISHMEM4PY_SOURCE_PYTHON_ROOT}/ishmem4py")
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/ DESTINATION ${ISHMEM4PY_BUILD_ROOT})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/examples/ DESTINATION ${ISHMEM4PY_BUILD_ROOT})
-
 add_custom_target(ishmem4py-package-files
     COMMAND ${CMAKE_COMMAND} -E make_directory "${ISHMEM4PY_PYTHON_BUILD_ROOT}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -30,6 +27,12 @@ add_custom_target(ishmem4py-package-files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${ISHMEM4PY_SOURCE_PYTHON_ROOT}/setup.py"
         "${ISHMEM4PY_PYTHON_BUILD_ROOT}/setup.py"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/test"
+        "${ISHMEM4PY_BUILD_ROOT}/test"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/examples"
+        "${ISHMEM4PY_BUILD_ROOT}/examples"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${ISHMEM4PY_SOURCE_PKG_DIR}"
         "${ISHMEM4PY_PKG_BUILD_DIR}"
