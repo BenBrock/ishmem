@@ -1,46 +1,10 @@
 # Copyright (C) 2026 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .core import (
-    IshmemError,
-    IshmemStateError,
-    SymmetricMemory,
-    barrier_all,
-    calloc,
-    fence,
-    finalize,
-    free,
-    getmem,
-    info_get_version,
-    init,
-    is_initialized,
-    malloc,
-    my_pe,
-    n_pes,
-    putmem,
-    quiet,
-    sync_all,
-)
+"""Public top-level imports for the Intel SHMEM Python bindings."""
 
-__all__ = [
-    "IshmemError",
-    "IshmemStateError",
-    "SymmetricMemory",
-    "barrier_all",
-    "calloc",
-    "fence",
-    "finalize",
-    "free",
-    "getmem",
-    "info_get_version",
-    "init",
-    "is_initialized",
-    "malloc",
-    "my_pe",
-    "n_pes",
-    "putmem",
-    "quiet",
-    "sync_all",
-]
+from . import core
+from .core import *
+from .version import __version__
 
-__version__ = "0.1.0a0"
+__all__ = list(core.__all__) + ["__version__"]
