@@ -31,4 +31,7 @@ ishmem4py = [
   "_ishmem4py_runtime*.so",
   "_ishmem4py_runtime*.dylib",
   "_ishmem4py_runtime*.pyd",
+  "_ishmem4py_torch*.so",
+  "_ishmem4py_torch*.dylib",
+  "_ishmem4py_torch*.pyd",
 ]

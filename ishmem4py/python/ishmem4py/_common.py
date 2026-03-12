@@ -287,10 +287,17 @@ def _check_can_init() -> None:
 def _check_can_finalize() -> None:
     if not _initialized:
         raise IshmemStateError("Intel SHMEM is not initialized")
-    if _live_allocations:
-        leaked = ", ".join(
-            f"0x{symm.ptr:x}" for symm in sorted(_live_allocations.values(), key=lambda item: item.ptr)
-        )
+    leaked_ptrs = [
+        f"0x{symm.ptr:x}" for symm in sorted(_live_allocations.values(), key=lambda item: item.ptr)
+    ]
+    try:
+        from . import torch as _ishmem_torch
+
+        leaked_ptrs.extend(f"0x{ptr:x}" for ptr in _ishmem_torch._live_tensor_pointers())
+    except Exception:
+        pass
+    if leaked_ptrs:
+        leaked = ", ".join(leaked_ptrs)
         raise IshmemStateError(
             "cannot finalize while symmetric allocations are still live; free them first: " f"{leaked}"
         )
@@ -342,6 +349,15 @@ def _pointer_from_local_buffer(obj, *, writable: bool, offset: int = 0) -> _Poin
         size = _normalize_span(obj, size=None, offset=offset)
         return _PointerInfo(ptr=obj.ptr + offset, size=size, keepalive=obj)
 
+    try:
+        from . import torch as _ishmem_torch
+
+        tensor_info = _ishmem_torch._pointer_from_tensor(obj, writable=writable, offset=offset)
+        if tensor_info is not None:
+            return tensor_info
+    except Exception:
+        pass
+
     mv = _ensure_contiguous_memoryview(obj, writable=writable)
 
     if offset < 0:
@@ -359,9 +375,21 @@ def _pointer_from_local_buffer(obj, *, writable: bool, offset: int = 0) -> _Poin
     return _PointerInfo(ptr=ctypes.addressof(raw) + offset, size=mv.nbytes - offset, keepalive=(mv, raw))
 
 
-def _symmetric_target(obj) -> SymmetricMemory:
-    _require_active(obj)
-    return obj
+def _symmetric_target(obj):
+    if isinstance(obj, SymmetricMemory):
+        _require_active(obj)
+        return obj
+
+    try:
+        from . import torch as _ishmem_torch
+
+        target = _ishmem_torch._symmetric_tensor_target(obj)
+        if target is not None:
+            return target
+    except Exception:
+        pass
+
+    raise TypeError("expected a SymmetricMemory instance or a live ishmem4py symmetric tensor")
 
 
 def _check_status(status: int | None, opname: str) -> None:

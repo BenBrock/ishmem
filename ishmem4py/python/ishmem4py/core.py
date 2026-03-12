@@ -44,3 +44,35 @@ __all__ += init_fini.__all__
 __all__ += memory.__all__
 __all__ += rma.__all__
 __all__ += teams.__all__
+
+
+def tensor(*args, **kwargs):
+    from . import torch as torch_interop
+
+    return torch_interop.tensor(*args, **kwargs)
+
+
+def free_tensor(*args, **kwargs):
+    from . import torch as torch_interop
+
+    return torch_interop.free_tensor(*args, **kwargs)
+
+
+def tensor_base(*args, **kwargs):
+    from . import torch as torch_interop
+
+    return torch_interop.tensor_base(*args, **kwargs)
+
+
+def is_symmetric_tensor(*args, **kwargs):
+    from . import torch as torch_interop
+
+    return torch_interop.is_symmetric_tensor(*args, **kwargs)
+
+
+__all__ += [
+    "free_tensor",
+    "is_symmetric_tensor",
+    "tensor",
+    "tensor_base",
+]
