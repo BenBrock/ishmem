@@ -85,6 +85,30 @@ def _configure_runtime(runtime):
     ]
     runtime.ishmem4py_getmem.restype = None
 
+    runtime.ishmem4py_putmem_on_queue.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        ctypes.c_int,
+        ctypes.c_void_p,
+    ]
+    runtime.ishmem4py_putmem_on_queue.restype = None
+
+    runtime.ishmem4py_getmem_on_queue.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        ctypes.c_int,
+        ctypes.c_void_p,
+    ]
+    runtime.ishmem4py_getmem_on_queue.restype = None
+
+    runtime.ishmem4py_quiet_on_queue.argtypes = [ctypes.c_void_p]
+    runtime.ishmem4py_quiet_on_queue.restype = None
+
+    runtime.ishmem4py_queue_sync.argtypes = [ctypes.c_void_p]
+    runtime.ishmem4py_queue_sync.restype = None
+
     runtime.ishmem4py_ptr.argtypes = [ctypes.c_void_p, ctypes.c_int]
     runtime.ishmem4py_ptr.restype = ctypes.c_void_p
 

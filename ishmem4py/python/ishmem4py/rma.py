@@ -27,15 +27,38 @@ __all__ = [
 ]
 
 
+def _queue_handle(queue) -> int:
+    if queue is None:
+        raise ValueError("queue must not be None")
+    if isinstance(queue, int):
+        handle = int(queue)
+    elif isinstance(queue, ctypes.c_void_p):
+        handle = int(queue.value or 0)
+    elif hasattr(queue, "sycl_queue"):
+        handle = int(queue.sycl_queue)
+    elif hasattr(queue, "_as_parameter_"):
+        handle = int(getattr(queue._as_parameter_, "value", queue._as_parameter_))
+    else:
+        raise TypeError("queue must be a torch.xpu.Stream, ctypes.c_void_p, or integer queue pointer")
+    if handle == 0:
+        raise ValueError("queue pointer must be non-zero")
+    return handle
+
+
 def fence() -> None:
     """Order previously issued put-like operations."""
     _require_initialized()
     RUNTIME.ishmem4py_fence()
 
 
-def quiet() -> None:
+def quiet(queue=None) -> None:
     """Wait for completion of previously issued RMA operations."""
     _require_initialized()
+    if queue is not None:
+        queue_ptr = ctypes.c_void_p(_queue_handle(queue))
+        RUNTIME.ishmem4py_queue_sync(queue_ptr)
+        RUNTIME.ishmem4py_quiet()
+        return
     RUNTIME.ishmem4py_quiet()
 
 
@@ -47,6 +70,7 @@ def put(
     size: Optional[int] = None,
     dest_offset: int = 0,
     src_offset: int = 0,
+    queue=None,
 ) -> int:
     """Copy bytes from a local buffer into symmetric memory on ``pe``."""
     _require_initialized()
@@ -62,12 +86,21 @@ def put(
     if nbytes > src_info.size:
         raise ValueError("size extends past the source buffer")
 
-    RUNTIME.ishmem4py_putmem(
-        ctypes.c_void_p(dest.ptr + dest_offset),
-        ctypes.c_void_p(src_info.ptr),
-        nbytes,
-        pe,
-    )
+    if queue is None:
+        RUNTIME.ishmem4py_putmem(
+            ctypes.c_void_p(dest.ptr + dest_offset),
+            ctypes.c_void_p(src_info.ptr),
+            nbytes,
+            pe,
+        )
+    else:
+        RUNTIME.ishmem4py_putmem_on_queue(
+            ctypes.c_void_p(dest.ptr + dest_offset),
+            ctypes.c_void_p(src_info.ptr),
+            nbytes,
+            pe,
+            ctypes.c_void_p(_queue_handle(queue)),
+        )
     return nbytes
 
 
@@ -79,6 +112,7 @@ def get(
     size: Optional[int] = None,
     dest_offset: int = 0,
     src_offset: int = 0,
+    queue=None,
 ) -> int:
     """Copy bytes from symmetric memory on ``pe`` into a local buffer."""
     _require_initialized()
@@ -94,12 +128,21 @@ def get(
     if nbytes > src_size:
         raise ValueError("size extends past the source symmetric object")
 
-    RUNTIME.ishmem4py_getmem(
-        ctypes.c_void_p(dest_info.ptr),
-        ctypes.c_void_p(src.ptr + src_offset),
-        nbytes,
-        pe,
-    )
+    if queue is None:
+        RUNTIME.ishmem4py_getmem(
+            ctypes.c_void_p(dest_info.ptr),
+            ctypes.c_void_p(src.ptr + src_offset),
+            nbytes,
+            pe,
+        )
+    else:
+        RUNTIME.ishmem4py_getmem_on_queue(
+            ctypes.c_void_p(dest_info.ptr),
+            ctypes.c_void_p(src.ptr + src_offset),
+            nbytes,
+            pe,
+            ctypes.c_void_p(_queue_handle(queue)),
+        )
     return nbytes
 
 

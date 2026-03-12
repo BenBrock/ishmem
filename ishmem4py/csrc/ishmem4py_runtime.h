@@ -57,6 +57,12 @@ ISHMEM4PY_EXPORT void *ishmem4py_calloc(size_t count, size_t size);
 ISHMEM4PY_EXPORT void ishmem4py_free(void *ptr);
 ISHMEM4PY_EXPORT void ishmem4py_putmem(void *dest, const void *src, size_t nbytes, int pe);
 ISHMEM4PY_EXPORT void ishmem4py_getmem(void *dest, const void *src, size_t nbytes, int pe);
+ISHMEM4PY_EXPORT void ishmem4py_putmem_on_queue(void *dest, const void *src, size_t nbytes,
+                                                int pe, void *queue);
+ISHMEM4PY_EXPORT void ishmem4py_getmem_on_queue(void *dest, const void *src, size_t nbytes,
+                                                int pe, void *queue);
+ISHMEM4PY_EXPORT void ishmem4py_quiet_on_queue(void *queue);
+ISHMEM4PY_EXPORT void ishmem4py_queue_sync(void *queue);
 ISHMEM4PY_EXPORT void *ishmem4py_ptr(const void *dest, int pe);
 ISHMEM4PY_EXPORT int ishmem4py_team_my_pe(int team);
 ISHMEM4PY_EXPORT int ishmem4py_team_n_pes(int team);

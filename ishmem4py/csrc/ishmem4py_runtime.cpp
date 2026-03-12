@@ -5,6 +5,7 @@
 #include "ishmem4py_runtime.h"
 
 #include <ishmem.h>
+#include <ishmemx.h>
 
 #include <cstring>
 
@@ -171,6 +172,30 @@ void ishmem4py_putmem(void *dest, const void *src, size_t nbytes, int pe)
 void ishmem4py_getmem(void *dest, const void *src, size_t nbytes, int pe)
 {
     ishmem_getmem(dest, src, nbytes, pe);
+}
+
+void ishmem4py_putmem_on_queue(void *dest, const void *src, size_t nbytes, int pe, void *queue)
+{
+    auto *q = reinterpret_cast<sycl::queue *>(queue);
+    ishmemx_putmem_on_queue(dest, src, nbytes, pe, *q, {});
+}
+
+void ishmem4py_getmem_on_queue(void *dest, const void *src, size_t nbytes, int pe, void *queue)
+{
+    auto *q = reinterpret_cast<sycl::queue *>(queue);
+    ishmemx_getmem_on_queue(dest, src, nbytes, pe, *q, {});
+}
+
+void ishmem4py_quiet_on_queue(void *queue)
+{
+    auto *q = reinterpret_cast<sycl::queue *>(queue);
+    ishmemx_quiet_on_queue(*q, {});
+}
+
+void ishmem4py_queue_sync(void *queue)
+{
+    auto *q = reinterpret_cast<sycl::queue *>(queue);
+    q->wait_and_throw();
 }
 
 void *ishmem4py_ptr(const void *dest, int pe)

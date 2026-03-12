@@ -9,8 +9,9 @@ It targets the same host-side workflow that the C and C++ Intel SHMEM APIs alrea
 while adopting a small, Python-oriented surface inspired by ``nvshmem4py`` where the models
 overlap.
 
-The current binding is intentionally synchronous and host-driven.
-It does not yet expose Intel SHMEM queue-based extensions or device-initiated Python APIs.
+The current binding is intentionally host-driven.
+It now exposes queue-based host ``put`` and ``get`` operations for XPU workflows, but it does
+not yet expose device-initiated Python APIs.
 
 .. currentmodule:: ishmem4py
 
@@ -50,6 +51,10 @@ Memory Management
    calloc
    buffer
    free
+   tensor
+   free_tensor
+   tensor_base
+   is_symmetric_tensor
    ptr
    ishmem_ptr
    SymmetricMemory
@@ -136,6 +141,51 @@ Example:
        ishmem.free(buf)
        ishmem.finalize()
 
+Torch/XPU interop is also available as an optional build-time feature.
+Those helpers allocate symmetric memory directly as ``torch.Tensor`` objects backed by the
+Intel SHMEM heap, which is useful for host-driven one-sided XPU workflows:
+
+.. code-block:: python
+
+   import torch
+   import ishmem4py as ishmem
+
+   ishmem.init()
+   try:
+       src = ishmem.tensor((4,), dtype=torch.float32, device="xpu")
+       dst = ishmem.tensor((4,), dtype=torch.float32, device="xpu")
+
+       src.fill_(7.0)
+       stream = torch.xpu.Stream()
+       ishmem.put(dst, src, pe=ishmem.my_pe(), queue=stream)
+       ishmem.quiet(queue=stream)
+   finally:
+       ishmem.free_tensor(dst)
+       ishmem.free_tensor(src)
+       ishmem.finalize()
+
+When torch interop is built, the top-level module exposes ``tensor``, ``free_tensor``,
+``tensor_base``, and ``is_symmetric_tensor`` lazily so that plain ``import ishmem4py`` does
+not require importing PyTorch up front.
+
+Queue-Based RMA
+^^^^^^^^^^^^^^^
+
+``ishmem4py.put`` and ``ishmem4py.get`` accept an optional ``queue=...`` argument for
+host-initiated queue-based Intel SHMEM operations.
+This is intended for XPU workflows that pass a ``torch.xpu.Stream`` or a raw SYCL queue handle.
+
+Completion remains host-driven: after issuing queue-based RMA, wait for the queue and then call
+``ishmem.quiet(queue=stream)``.
+
+Example:
+
+.. code-block:: python
+
+   stream = torch.xpu.Stream()
+   ishmem.get(dst, src, pe=peer, queue=stream)
+   ishmem.quiet(queue=stream)
+
 Collectives and Teams
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -164,6 +214,17 @@ Build Intel SHMEM with Python bindings enabled:
 .. code-block:: bash
 
    cmake -S /path/to/ishmem -B /path/to/build -DBUILD_PYTHON_BINDINGS=ON ...
+   cmake --build /path/to/build --target ishmem4py -j4
+
+To include optional Torch/XPU symmetric tensor support in the package, enable the extra build:
+
+.. code-block:: bash
+
+   cmake -S /path/to/ishmem -B /path/to/build \
+     -DBUILD_PYTHON_BINDINGS=ON \
+     -DISHMEM4PY_BUILD_TORCH_INTEROP=ON \
+     -DPython3_EXECUTABLE=/path/to/python-from-torch-xpu-env \
+     -DCMAKE_PREFIX_PATH="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')" ...
    cmake --build /path/to/build --target ishmem4py -j4
 
 Install from the build tree:
@@ -199,6 +260,12 @@ Examples:
    mpiexec -n 1 ishmrun python3 /path/to/ishmem/ishmem4py/test/smoke_test.py
    mpiexec -n 2 ishmrun python3 /path/to/ishmem/ishmem4py/test/ring_test.py
    mpiexec -n 2 ishmrun python3 /path/to/ishmem/ishmem4py/test/collective_test.py
+   mpiexec -n 1 ishmrun python3 /path/to/ishmem/ishmem4py/test/torch_tensor_test.py
+   mpiexec -n 2 ishmrun python3 /path/to/ishmem/ishmem4py/test/torch_queue_get_test.py
+
+Use real script files for multi-PE validation rather than ``python - <<'PY'`` heredoc launches;
+the latter can appear to hang under ``mpiexec`` because of stdin interaction with the process
+manager.
 
 Current Scope
 ^^^^^^^^^^^^^
