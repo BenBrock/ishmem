@@ -37,10 +37,22 @@ __all__ = [
 ]
 
 
-def init() -> None:
-    """Initialize Intel SHMEM for the current process."""
+def init(*, device_id: int | None = None) -> None:
+    """Initialize Intel SHMEM for the current process.
+
+    When ``device_id`` is provided, Intel SHMEM selects that visible XPU ordinal
+    through ``ishmemx_init_attr``. The default ``None`` preserves the legacy
+    single-visible-device behavior.
+    """
     _check_can_init()
-    RUNTIME.ishmem4py_init()
+    if device_id is None:
+        RUNTIME.ishmem4py_init()
+    else:
+        if isinstance(device_id, bool) or not isinstance(device_id, int):
+            raise TypeError("device_id must be an int or None")
+        if device_id < -1:
+            raise ValueError("device_id must be >= -1")
+        RUNTIME.ishmem4py_init_with_device(int(device_id))
     _set_initialized()
 
 

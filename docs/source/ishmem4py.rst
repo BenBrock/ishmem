@@ -141,6 +141,14 @@ Example:
        ishmem.free(buf)
        ishmem.finalize()
 
+When multiple XPU devices are visible to a process, pass ``device_id=...`` to
+``ishmem.init(...)`` to select the visible device ordinal for Intel SHMEM:
+
+.. code-block:: python
+
+   local_rank = int(os.environ["MPI_LOCALRANKID"])
+   ishmem.init(device_id=local_rank)
+
 Torch/XPU interop is also available as an optional build-time feature.
 Those helpers allocate symmetric memory directly as ``torch.Tensor`` objects backed by the
 Intel SHMEM heap, which is useful for host-driven one-sided XPU workflows:

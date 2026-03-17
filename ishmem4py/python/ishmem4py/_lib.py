@@ -23,6 +23,9 @@ def _configure_runtime(runtime):
     runtime.ishmem4py_init.argtypes = []
     runtime.ishmem4py_init.restype = None
 
+    runtime.ishmem4py_init_with_device.argtypes = [ctypes.c_int]
+    runtime.ishmem4py_init_with_device.restype = None
+
     runtime.ishmem4py_finalize.argtypes = []
     runtime.ishmem4py_finalize.restype = None
 

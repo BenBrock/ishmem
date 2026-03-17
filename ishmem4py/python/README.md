@@ -71,6 +71,8 @@ export PYTHONPATH=/path/to/ishmem-src/ishmem4py/python:/path/to/ishmem-src/ishme
   PyTorch.
 - The runtime library is loaded lazily, so importing the package for documentation or static
   inspection does not require a live Intel SHMEM runtime.
+- `ishmem.init(device_id=...)` selects an explicit visible XPU ordinal for multi-device launch
+  modes. Leaving `device_id` unset preserves the single-visible-device behavior.
 - `put`, `get`, and `quiet` accept `queue=` for queue-based host-initiated XPU RMA. Supported
   queue objects are `torch.xpu.Stream`, `ctypes.c_void_p`, and raw integer SYCL queue pointers.
 - The current Torch/XPU MVP is focused on XPU device memory and XPU-to-XPU one-sided transfers.

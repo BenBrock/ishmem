@@ -97,6 +97,13 @@ void ishmem4py_init(void)
     ishmem_init();
 }
 
+void ishmem4py_init_with_device(int device_id)
+{
+    ishmemx_attr_t attr{};
+    attr.device_id = device_id;
+    ishmemx_init_attr(&attr);
+}
+
 void ishmem4py_finalize(void)
 {
     ishmem_finalize();

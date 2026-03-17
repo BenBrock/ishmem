@@ -42,6 +42,7 @@ typedef struct ishmem4py_team_config_t {
 } ishmem4py_team_config_t;
 
 ISHMEM4PY_EXPORT void ishmem4py_init(void);
+ISHMEM4PY_EXPORT void ishmem4py_init_with_device(int device_id);
 ISHMEM4PY_EXPORT void ishmem4py_finalize(void);
 ISHMEM4PY_EXPORT int ishmem4py_my_pe(void);
 ISHMEM4PY_EXPORT int ishmem4py_n_pes(void);
