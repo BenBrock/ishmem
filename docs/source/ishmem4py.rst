@@ -142,7 +142,9 @@ Example:
        ishmem.finalize()
 
 When multiple XPU devices are visible to a process, pass ``device_id=...`` to
-``ishmem.init(...)`` to select the visible device ordinal for Intel SHMEM:
+``ishmem.init(...)`` to select the visible device ordinal for Intel SHMEM.
+``device_id`` may be an integer visible-device ordinal, a string like
+``"xpu:3"``, or a ``torch.device("xpu", 3)``:
 
 .. code-block:: python
 

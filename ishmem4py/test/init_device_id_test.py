@@ -8,8 +8,14 @@ import subprocess
 import sys
 
 import ishmem4py as ishmem
+from ishmem4py import init_fini as _init_fini
 
 from utils import expect_equal, pack_int32, unpack_int32
+
+try:
+    import torch
+except Exception:
+    torch = None
 
 
 def _visible_level_zero_gpu_count() -> int:
@@ -31,10 +37,10 @@ def _local_rank() -> int:
 def main() -> int:
     try:
         ishmem.init(device_id="0")  # type: ignore[arg-type]
-    except TypeError:
+    except ValueError:
         pass
     else:
-        raise AssertionError("init(device_id='0') should raise TypeError")
+        raise AssertionError("init(device_id='0') should raise ValueError")
 
     try:
         ishmem.init(device_id=-2)
@@ -42,6 +48,13 @@ def main() -> int:
         pass
     else:
         raise AssertionError("init(device_id=-2) should raise ValueError")
+
+    try:
+        ishmem.init(device_id="cuda:0")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("init(device_id='cuda:0') should raise ValueError")
 
     visible_gpus = _visible_level_zero_gpu_count()
     local_rank = _local_rank()
@@ -55,7 +68,27 @@ def main() -> int:
         )
         return 77
 
-    ishmem.init(device_id=local_rank)
+    if torch is not None:
+        with torch.xpu.device(local_rank):
+            expect_equal("xpu string current device normalization", _init_fini._normalize_device_id("xpu"), local_rank)
+            expect_equal(
+                "torch.device current device normalization",
+                _init_fini._normalize_device_id(torch.device("xpu")),
+                local_rank,
+            )
+            expect_equal(
+                "torch.device explicit normalization",
+                _init_fini._normalize_device_id(torch.device("xpu", local_rank)),
+                local_rank,
+            )
+    expect_equal(
+        "xpu explicit string normalization",
+        _init_fini._normalize_device_id(f"xpu:{local_rank}"),
+        local_rank,
+    )
+
+    init_device = torch.device("xpu", local_rank) if torch is not None else f"xpu:{local_rank}"
+    ishmem.init(device_id=init_device)
     try:
         my_pe = ishmem.my_pe()
         npes = ishmem.n_pes()
