@@ -66,9 +66,13 @@ export PYTHONPATH=/path/to/ishmem-src/ishmem4py/python:/path/to/ishmem-src/ishme
 
 - `import ishmem4py` and `import ishmem4py.core` both expose the full public API.
 - Torch/XPU interop is imported lazily through `ishmem4py.tensor(...)`,
-  `ishmem4py.free_tensor(...)`, `ishmem4py.tensor_base(...)`, and
+  `ishmem4py.free_tensor(...)`, `ishmem4py.get_peer_tensor(...)`,
+  `ishmem4py.tensor_base(...)`, and
   `ishmem4py.is_symmetric_tensor(...)` so that plain package import does not eagerly import
   PyTorch.
+- `ishmem4py.get_peer_tensor(tensor, pe=...)` mirrors `nvshmem4py`'s peer-tensor helper for
+  directly addressable XPU aliases returned by `ishmem_ptr`. The returned tensor is a non-owning
+  alias and must not be passed to `ishmem4py.free_tensor(...)`.
 - The runtime library is loaded lazily, so importing the package for documentation or static
   inspection does not require a live Intel SHMEM runtime.
 - `ishmem.init(device_id=...)` selects an explicit visible XPU ordinal for multi-device launch

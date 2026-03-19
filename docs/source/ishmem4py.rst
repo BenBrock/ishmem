@@ -53,6 +53,7 @@ Memory Management
    free
    tensor
    free_tensor
+   get_peer_tensor
    tensor_base
    is_symmetric_tensor
    ptr
@@ -174,8 +175,19 @@ Intel SHMEM heap, which is useful for host-driven one-sided XPU workflows:
        ishmem.free_tensor(src)
        ishmem.finalize()
 
+``get_peer_tensor`` provides the tensor-level analogue of ``ishmem_ptr`` for Torch/XPU interop:
+
+.. code-block:: python
+
+   peer = ishmem.get_peer_tensor(src, pe=neighbor)
+   peer.add_(update)
+
+The returned tensor is a non-owning XPU alias of a remote symmetric allocation. It is valid for
+device-side loads and stores, but must not be passed to ``ishmem.free_tensor(...)``.
+
 When torch interop is built, the top-level module exposes ``tensor``, ``free_tensor``,
-``tensor_base``, and ``is_symmetric_tensor`` lazily so that plain ``import ishmem4py`` does
+``get_peer_tensor``, ``tensor_base``, and ``is_symmetric_tensor`` lazily so that plain
+``import ishmem4py`` does
 not require importing PyTorch up front.
 
 Queue-Based RMA
