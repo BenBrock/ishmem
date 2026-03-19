@@ -25,10 +25,24 @@ def main() -> int:
             expect_true("tensor base returns self for base allocation", ishmem.tensor_base(tensor) is tensor)
             expect_equal("tensor contents", tensor.cpu().tolist(), [3.0, 3.0, 3.0, 3.0])
 
+            peer = ishmem.get_peer_tensor(tensor, pe=ishmem.my_pe())
+            expect_true("peer tensor is symmetric", ishmem.is_symmetric_tensor(peer))
+            expect_true("peer tensor base returns original allocation", ishmem.tensor_base(peer) is tensor)
+            peer.add_(2.0)
+            torch.xpu.synchronize()
+            expect_equal("peer tensor self alias update", tensor.cpu().tolist(), [5.0, 5.0, 5.0, 5.0])
+
+            try:
+                ishmem.free_tensor(peer)
+            except ishmem.IshmemStateError:
+                pass
+            else:
+                raise AssertionError("free_tensor(peer) should fail for non-owning aliases")
+
             stream = torch.xpu.Stream()
             ishmem.put(mirror, tensor, pe=ishmem.my_pe(), queue=stream)
             ishmem.quiet(queue=stream)
-            expect_equal("queued self put", mirror.cpu().tolist(), [3.0, 3.0, 3.0, 3.0])
+            expect_equal("queued self put", mirror.cpu().tolist(), [5.0, 5.0, 5.0, 5.0])
 
             recv = ishmem.tensor((4,), dtype=torch.float32, device="xpu")
             try:
@@ -36,7 +50,7 @@ def main() -> int:
                 stream = torch.xpu.Stream()
                 ishmem.get(recv, tensor, pe=ishmem.my_pe(), queue=stream)
                 ishmem.quiet(queue=stream)
-                expect_equal("queued self get", recv.cpu().tolist(), [3.0, 3.0, 3.0, 3.0])
+                expect_equal("queued self get", recv.cpu().tolist(), [5.0, 5.0, 5.0, 5.0])
             finally:
                 ishmem.free_tensor(recv)
         finally:

@@ -58,6 +58,12 @@ def free_tensor(*args, **kwargs):
     return torch_interop.free_tensor(*args, **kwargs)
 
 
+def get_peer_tensor(*args, **kwargs):
+    from . import torch as torch_interop
+
+    return torch_interop.get_peer_tensor(*args, **kwargs)
+
+
 def tensor_base(*args, **kwargs):
     from . import torch as torch_interop
 
@@ -72,6 +78,7 @@ def is_symmetric_tensor(*args, **kwargs):
 
 __all__ += [
     "free_tensor",
+    "get_peer_tensor",
     "is_symmetric_tensor",
     "tensor",
     "tensor_base",
